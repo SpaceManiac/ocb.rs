@@ -1,8 +1,6 @@
-//#![deny(warnings)]
+#![deny(warnings)]
 
 extern crate ocb;
-
-use std::{ptr, mem};
 
 fn from_hex(x: &str) -> Vec<u8> {
     let mut out = Vec::with_capacity(x.len() / 2);

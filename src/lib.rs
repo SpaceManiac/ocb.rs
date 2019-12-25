@@ -1,10 +1,10 @@
-//#![deny(warnings)]
+#![deny(warnings)]
 
 extern crate ocb_sys;
 extern crate libc;
 extern crate clear_on_drop;
 
-use std::{result, mem, fmt, ptr};
+use std::{result, fmt, ptr};
 
 use ocb_sys::{AE_SUCCESS, AE_INVALID, AE_NOT_SUPPORTED};
 use ocb_sys::{AE_FINALIZE, AE_CTX_SIZEOF};
@@ -123,7 +123,7 @@ impl Context {
             assert_eq!(AE_CTX_SIZEOF, ae_ctx_sizeof() as usize);
 
             let mut ctx = Context {
-                ctx: mem::uninitialized(),
+                ctx: [0; AE_CTX_SIZEOF],
             };
             let n = check(ae_init(ctx.ctx(), key.0.as_ptr(),
                 OCB_KEY_LEN, NONCE_LEN as c_int, OCB_TAG_LEN))?;
