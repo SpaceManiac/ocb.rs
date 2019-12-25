@@ -25,7 +25,7 @@ fn iterative() {
         }}
     }
 
-    for i in 0..128us {
+    for i in 0..128 {
         // NB: plaintext and associated data are swapped in the spec's OCB-ENCRYPT
         let s: Vec<u8> = iter::repeat(0).take(i).collect();
         ct.extend(enc!(3*i+1, &s, &s).into_iter());

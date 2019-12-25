@@ -1,27 +1,30 @@
-#![feature(rustc_private)]
-#![deny(warnings)]
+//#![deny(warnings)]
 
-extern crate serialize;
 extern crate ocb;
 
 use std::{ptr, mem};
-use serialize::hex::FromHex;
 
-unsafe fn from_hex<T>(x: &str) -> T {
-    let mut out: T = mem::uninitialized();
-    let y = x.from_hex().unwrap();
-    assert_eq!(y.len(), mem::size_of::<T>());
-    ptr::copy_nonoverlapping(y.as_ptr() as *const T, &mut out, 1);
+fn from_hex(x: &str) -> Vec<u8> {
+    let mut out = Vec::with_capacity(x.len() / 2);
+    for chunk in x.as_bytes().chunks(2) {
+        let hi = (chunk[0] as char).to_digit(16).unwrap() as u8;
+        let lo = (chunk[1] as char).to_digit(16).unwrap() as u8;
+        out.push((hi << 4) | lo);
+    }
     out
+}
+
+fn from_hex_array<T: for<'a> std::convert::TryFrom<&'a [u8]>>(x: &str) -> T {
+    T::try_from(&from_hex(x)).ok().expect("wrong size")
 }
 
 macro_rules! test_vector {
     (K:$key:expr; N:$nonce:expr; A:$assoc:expr; P:$pt:expr; C:$ct:expr;) => {{
-        let mut ctx = ocb::Context::new(ocb::Key(unsafe { from_hex($key) })).unwrap();
-        let nonce: ocb::Nonce = ocb::Nonce(unsafe { from_hex($nonce) });
-        let assoc = $assoc.from_hex().unwrap();
-        let pt = $pt.from_hex().unwrap();
-        let ct = $ct.from_hex().unwrap();
+        let mut ctx = ocb::Context::new(ocb::Key(from_hex_array($key))).unwrap();
+        let nonce: ocb::Nonce = ocb::Nonce(from_hex_array($nonce));
+        let assoc = from_hex($assoc);
+        let pt = from_hex($pt);
+        let ct = from_hex($ct);
 
         assert_eq!(ct, ctx.encrypt(&mut Some(nonce.clone()).into_iter(),
             &pt, &assoc).unwrap().1);
