@@ -1,7 +1,6 @@
-#![feature(libc)]
 #![deny(warnings)]
 
-extern crate gcc;
+extern crate cc;
 extern crate libc;
 
 use std::{fs, env, str};
@@ -13,7 +12,7 @@ use libc::c_int;
 fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
 
-    gcc::Config::new()
+    cc::Build::new()
         .file("ocb.c")
         .flag("-O3").flag("-fPIC")
         .compile("libocb.a");
@@ -35,7 +34,7 @@ fn main() {
     assert!(output.status.success());
 
     let size: c_int = str::from_utf8(&output.stdout).unwrap()
-        .trim_right().parse().unwrap();
+        .trim_end().parse().unwrap();
 
     // sanity check
     assert!(size > 0);

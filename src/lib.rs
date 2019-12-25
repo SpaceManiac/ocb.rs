@@ -1,11 +1,10 @@
-#![feature(libc, core)]
-#![deny(warnings)]
+//#![deny(warnings)]
 
 extern crate ocb_sys;
 extern crate libc;
+extern crate clear_on_drop;
 
-use std::{result, mem, fmt, ptr, simd};
-use std::intrinsics::volatile_set_memory;
+use std::{result, mem, fmt, ptr};
 
 use ocb_sys::{AE_SUCCESS, AE_INVALID, AE_NOT_SUPPORTED};
 use ocb_sys::{AE_FINALIZE, AE_CTX_SIZEOF};
@@ -51,8 +50,8 @@ fn check(x: c_int) -> Result<c_int> {
 }
 
 /// An OCB encryption/decryption context.
+#[repr(align(16))]
 pub struct Context {
-    _align: [simd::u32x4; 0],
     ctx: [u8; AE_CTX_SIZEOF],
 }
 
@@ -68,10 +67,7 @@ macro_rules! clear_on_drop {
     ($t:ty) => {
         impl Drop for $t {
             fn drop(&mut self) {
-                let buf = &mut self.0;
-                unsafe {
-                    volatile_set_memory(buf.as_mut_ptr(), 0, buf.len());
-                }
+                clear_on_drop::clear::Clear::clear(&mut self.0);
             }
         }
     }
@@ -127,11 +123,10 @@ impl Context {
             assert_eq!(AE_CTX_SIZEOF, ae_ctx_sizeof() as usize);
 
             let mut ctx = Context {
-                _align: [mem::uninitialized(); 0],
                 ctx: mem::uninitialized(),
             };
-            let n = try!(check(ae_init(ctx.ctx(), key.0.as_ptr(),
-                OCB_KEY_LEN, NONCE_LEN as c_int, OCB_TAG_LEN)));
+            let n = check(ae_init(ctx.ctx(), key.0.as_ptr(),
+                OCB_KEY_LEN, NONCE_LEN as c_int, OCB_TAG_LEN))?;
             assert_eq!(n, AE_SUCCESS);
             Ok(ctx)
         }
@@ -174,10 +169,10 @@ impl Context {
         let ct_len = plaintext.len() + TAG_LEN;
         let mut ct: Vec<u8> = Vec::with_capacity(ct_len);
         unsafe {
-            let n = try!(check(ae_encrypt(self.ctx(), nonce.0.as_ptr(),
+            let n = check(ae_encrypt(self.ctx(), nonce.0.as_ptr(),
                 plaintext.as_ptr(), plaintext.len() as c_int,
                 assoc_data.as_ptr(), assoc_data.len() as c_int,
-                ct.as_mut_ptr(), ptr::null_mut(), AE_FINALIZE)));
+                ct.as_mut_ptr(), ptr::null_mut(), AE_FINALIZE))?;
 
             assert_eq!(ct_len, n as usize);
             ct.set_len(ct_len);
@@ -199,10 +194,10 @@ impl Context {
         let pt_len = ciphertext.len() - TAG_LEN;
         let mut pt: Vec<u8> = Vec::with_capacity(pt_len);
         unsafe {
-            let n = try!(check(ae_decrypt(self.ctx(), nonce.0.as_ptr(),
+            let n = check(ae_decrypt(self.ctx(), nonce.0.as_ptr(),
                 ciphertext.as_ptr(), ciphertext.len() as c_int,
                 assoc_data.as_ptr(), assoc_data.len() as c_int,
-                pt.as_mut_ptr(), ptr::null_mut(), AE_FINALIZE)));
+                pt.as_mut_ptr(), ptr::null_mut(), AE_FINALIZE))?;
             assert_eq!(pt_len, n as usize);
             pt.set_len(pt_len);
             Ok(pt)

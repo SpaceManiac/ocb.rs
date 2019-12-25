@@ -8,6 +8,10 @@ readme = "README.md"
 license = "MIT"
 description = "OCB mode for authenticated encryption with associated data (AEAD)"
 
+[dependencies]
+libc = "0.2"
+clear_on_drop = "0.2"
+
 [dependencies.ocb_sys]
 version = "*"
 path = "ocb_sys"

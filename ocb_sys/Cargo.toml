@@ -9,7 +9,9 @@ name = "ocb_sys"
 path = "lib.rs"
 
 [build-dependencies]
-gcc = "0"
+cc = "1"
+libc = "0.2"
 
 [dependencies]
-openssl-sys = "0"
+openssl-sys = "0.9"
+libc = "0.2"
