@@ -704,7 +704,6 @@ static block gen_offset_from_nonce(ae_ctx *ctx, const void *nonce)
 	const union { unsigned x; unsigned char endian; } little = { 1 };
 	union { uint32_t u32[4]; uint8_t u8[16]; block bl; } tmp;
 	unsigned idx;
-	uint32_t tagadd;
 
 	/* Replace cached nonce Top if needed */
     #if (OCB_TAG_LEN > 0)
@@ -837,15 +836,15 @@ static void process_ad(ae_ctx *ctx, const void *ad, int ad_len, int final)
 			AES_ecb_encrypt_blks(ta,k,&ctx->encrypt_key);
 			switch (k) {
 				#if (BPI == 8)
-				case 8: ad_checksum = xor_block(ad_checksum, ta[7]);
-				case 7: ad_checksum = xor_block(ad_checksum, ta[6]);
-				case 6: ad_checksum = xor_block(ad_checksum, ta[5]);
-				case 5: ad_checksum = xor_block(ad_checksum, ta[4]);
+				case 8: ad_checksum = xor_block(ad_checksum, ta[7]);  // FALLTHRU
+				case 7: ad_checksum = xor_block(ad_checksum, ta[6]);  // FALLTHRU
+				case 6: ad_checksum = xor_block(ad_checksum, ta[5]);  // FALLTHRU
+				case 5: ad_checksum = xor_block(ad_checksum, ta[4]);  // FALLTHRU
 				#endif
-				case 4: ad_checksum = xor_block(ad_checksum, ta[3]);
-				case 3: ad_checksum = xor_block(ad_checksum, ta[2]);
-				case 2: ad_checksum = xor_block(ad_checksum, ta[1]);
-				case 1: ad_checksum = xor_block(ad_checksum, ta[0]);
+				case 4: ad_checksum = xor_block(ad_checksum, ta[3]);  // FALLTHRU
+				case 3: ad_checksum = xor_block(ad_checksum, ta[2]);  // FALLTHRU
+				case 2: ad_checksum = xor_block(ad_checksum, ta[1]);  // FALLTHRU
+				case 1: ad_checksum = xor_block(ad_checksum, ta[0]);  // FALLTHRU
 			}
 			ctx->ad_checksum = ad_checksum;
 		}
@@ -1005,14 +1004,14 @@ int ae_encrypt(ae_ctx     *  ctx,
 		}
 		switch (k) {
 			#if (BPI == 8)
-			case 7: ctp[6] = xor_block(ta[6], oa[6]);
-			case 6: ctp[5] = xor_block(ta[5], oa[5]);
-			case 5: ctp[4] = xor_block(ta[4], oa[4]);
-			case 4: ctp[3] = xor_block(ta[3], oa[3]);
+			case 7: ctp[6] = xor_block(ta[6], oa[6]);  // FALLTHRU
+			case 6: ctp[5] = xor_block(ta[5], oa[5]);  // FALLTHRU
+			case 5: ctp[4] = xor_block(ta[4], oa[4]);  // FALLTHRU
+			case 4: ctp[3] = xor_block(ta[3], oa[3]);  // FALLTHRU
 			#endif
-			case 3: ctp[2] = xor_block(ta[2], oa[2]);
-			case 2: ctp[1] = xor_block(ta[1], oa[1]);
-			case 1: ctp[0] = xor_block(ta[0], oa[0]);
+			case 3: ctp[2] = xor_block(ta[2], oa[2]);  // FALLTHRU
+			case 2: ctp[1] = xor_block(ta[1], oa[1]);  // FALLTHRU
+			case 1: ctp[0] = xor_block(ta[0], oa[0]);  // FALLTHRU
 		}
 
         /* Tag is placed at the correct location
@@ -1210,17 +1209,23 @@ int ae_decrypt(ae_ctx     *ctx,
 			#if (BPI == 8)
 			case 7: ptp[6] = xor_block(ta[6], oa[6]);
 				    checksum = xor_block(checksum, ptp[6]);
+				    // FALLTHRU
 			case 6: ptp[5] = xor_block(ta[5], oa[5]);
 				    checksum = xor_block(checksum, ptp[5]);
+				    // FALLTHRU
 			case 5: ptp[4] = xor_block(ta[4], oa[4]);
 				    checksum = xor_block(checksum, ptp[4]);
+				    // FALLTHRU
 			case 4: ptp[3] = xor_block(ta[3], oa[3]);
 				    checksum = xor_block(checksum, ptp[3]);
+				    // FALLTHRU
 			#endif
 			case 3: ptp[2] = xor_block(ta[2], oa[2]);
 				    checksum = xor_block(checksum, ptp[2]);
+				    // FALLTHRU
 			case 2: ptp[1] = xor_block(ta[1], oa[1]);
 				    checksum = xor_block(checksum, ptp[1]);
+				    // FALLTHRU
 			case 1: ptp[0] = xor_block(ta[0], oa[0]);
 				    checksum = xor_block(checksum, ptp[0]);
 		}
